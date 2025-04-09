@@ -1,0 +1,92 @@
+layouts:
+  - path: handler.go
+    body: |-
+      {{$OutDirs := GetUniqueHandlerOutDir .Methods}}
+      package {{.PackageName}}
+      import (
+       "context"
+      
+       "github.com/cloudwego/hertz/pkg/app"
+       logic "{{$.ProjPackage}}/biz/service/{{$.PackageName}}"
+       _ "{{$.ProjPackage}}/hertz_gen/{{$.PackageName}}"
+       "{{$.ProjPackage}}/biz/common/response"
+      )
+      {{range $_, $MethodInfo := .Methods}}
+      {{$MethodInfo.Comment}}
+      func {{$MethodInfo.Name}}(ctx context.Context, c *app.RequestContext) {
+       response.JSON(ctx, c, logic.New{{$MethodInfo.Name}}Service(ctx, c).Run)
+      }
+      {{end}}
+  - path: handler_single.go
+    body: |+
+      {{.Comment}}
+      func {{.Name}}(ctx context.Context, c *app.RequestContext) {
+       response.JSON(ctx, c, logic.New{{.Name}}Service(ctx, c).Run)
+      }
+  - path: "biz/service/{{.GenPackage}}/{{ToSnakeCase .MethodName}}.go"
+    loop_method: true
+    update_behavior:
+      type: "skip"
+    body: |-
+      package {{.FilePackage}}
+      import (
+       "context"
+
+       "github.com/cloudwego/hertz/pkg/app"
+       "ssg/trade-admin/biz/bizcontext"
+      {{- range $k, $v := .Models}}
+       {{$k}} "{{$v.Package}}"
+      {{- end}}
+      )
+      type {{.Name}}Service struct {
+          RequestContext  *app.RequestContext
+          Context         context.Context
+      }
+
+      func New{{.Name}}Service(Context context.Context, RequestContext *app.RequestContext) *{{.Name}}Service {
+       return &{{.Name}}Service{RequestContext: RequestContext, Context: Context}
+      }
+
+      func (h *{{.Name}}Service) Run(ctx *bizcontext.BizContext, req *{{.RequestTypeName}}) ( resp *{{.ReturnTypeName}}, err error) {
+        //defer func() {
+        // hlog.CtxInfof(h.Context, "req = %+v", req)
+        // hlog.CtxInfof(h.Context, "resp = %+v", resp)
+        //}()
+        // todo edit your code
+        // define your error in errno
+        // if err != nil {
+        // 	return nil, err
+        //  建议提前定义好错误码，这样可以直接返回错误码
+        //  return nil, errno.ServiceErr
+        // }
+       return
+      }
+  - path: "biz/service/{{.GenPackage}}/{{ToSnakeCase .MethodName}}_test.go"
+    loop_method: true
+    update_behavior:
+      type: "skip"
+    body: |-
+      package {{.FilePackage}}
+      import (
+        "context"
+        "testing"
+
+        "github.com/cloudwego/hertz/pkg/app"
+        "ssg/trade-admin/biz/bizcontext"
+        "github.com/cloudwego/hertz/pkg/common/test/assert"
+      {{- range $k, $v := .Models}}
+       {{$k}} "{{$v.Package}}"
+      {{- end}}
+      )
+      func Test{{.Name}}Service_Run(t *testing.T) {
+        ctx := context.Background()
+        c := app.NewContext(1)
+        s := New{{.Name}}Service(ctx, c)
+        // init req and assert value
+        req := &{{.RequestTypeName}}{}
+        bizctx := &bizcontext.BizContext{}
+        resp, err := s.Run(bizctx,req)
+        assert.DeepEqual(t, nil, resp)
+        assert.DeepEqual(t, nil, err)
+        // todo edit your unit test.
+      }

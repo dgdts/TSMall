@@ -1,0 +1,16 @@
+// idl/cms_http_api/hello.proto
+syntax = "proto3";
+
+package goods;
+
+option go_package = "goods";
+
+import "api.proto";
+
+message Empty {}
+
+service GoodsService {
+   rpc ApiHello(Empty) returns(Empty) {
+      option (api.post) = "/api/v1/goods/list";
+   }
+}
