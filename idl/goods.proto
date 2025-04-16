@@ -10,7 +10,7 @@ import "api.proto";
 message Empty {}
 
 service GoodsService {
-   rpc ApiHello(Empty) returns(Empty) {
+   rpc GoodsList(Empty) returns(Empty) {
       option (api.post) = "/api/v1/goods/list";
    }
 }

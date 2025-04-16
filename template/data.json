@@ -2,7 +2,8 @@
   "*": {
     "GoModule": "github.com/hertz/hello",
     "ServiceName": "hello_service",
-    "UseApacheThrift": true
+    "UseApacheThrift": true,
+    "AppName": "YOUR-APP-NAME"
   },
   "main.go": {
     "MainData": "this is customized render data"

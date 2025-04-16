@@ -1,21 +1,22 @@
-global:                     #全局配置
-  namespace: Production     #环境类型, 首字母大写, 正式环境：Production 开发环境：Development 测试环境：Test 根据具体需求可只建立正式环境和开发环境
-  env_name: prod          #环境名称, 正式环境: prod  开发环境/测试环境: test
+global:
+  namespace: Production
+  env_name: prod
   local_ip: ${POD_IP}               
   container_name: ${HOSTNAME}       
 
+mode: nacos
 
 hertz:
-  app: "ssg"
+  app: "TSMall"
   server: "enterbuild"
   enable_pprof: false
-  enable_gzip: true 
-  enable_access_log: true  
-  service: 
-    - name: "HelloService"
-      addr: ":8888"
+  enable_gzip: true
+  enable_access_log: true
+  service:
+    name: "TSMallService"
+    addr: ":8888"
 
-log:                      #日志配置
+log:
   log_mode: console
   log_level: info
   log_file_name: "log/hertz.log"
@@ -23,31 +24,33 @@ log:                      #日志配置
   log_max_age: 3
   log_max_backups: 50
 
-registry:                 #注册中心,目前公共库只支持nacos
-  name: nacos 
-  namespace: "29fca852-29df-4c01-9ebb-1399a52b59c6"
+registry:
+  name: nacos
+  namespace: "5b8d6e7c-c562-4001-b1b3-8a9be7cdabec"
   registry_address:
-    - 127.0.0.1:8848
-  username: ""
-  password: ""
+    - 10.11.100.90:8848
+  username: "nacos"
+  password: "fN2dJoX8LYRbxHJ1yU1x0aQ0vuylViYWuwLUUt"
 
-selector:                 #服务发现,目前公共库只支持nacos
-  name: nacos 
-  namespace: "29fca852-29df-4c01-9ebb-1399a52b59c6" 
+selector:
+  name: nacos
+  namespace: "5b8d6e7c-c562-4001-b1b3-8a9be7cdabec"
   server_addr:
-    - 127.0.0.1:8848
-  username: ""
-  password: ""
+    - 10.11.100.90:8848
+  username: "nacos"
+  password: "fN2dJoX8LYRbxHJ1yU1x0aQ0vuylViYWuwLUUt"
 
-config:                   #配置中心,目前公共库只支持nacos
-  name: nacos 
-  namespace: "29fca852-29df-4c01-9ebb-1399a52b59c6"
+config:
+  mode: nacos
+
+  name: nacos
+  namespace: "5b8d6e7c-c562-4001-b1b3-8a9be7cdabec"
   server_addr:
-    - 127.0.0.1:8848
-  username: ""
-  password: ""
+    - 10.11.100.90:8848
+  username: "nacos"
+  password: "fN2dJoX8LYRbxHJ1yU1x0aQ0vuylViYWuwLUUt"
 
-prometheus:               #监控配置
+prometheus:
   enable: true
   addr: ":9099"
   path: "/prometheus/metrics"

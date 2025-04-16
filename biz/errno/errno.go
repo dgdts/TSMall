@@ -5,33 +5,24 @@ import (
 	"fmt"
 )
 
-// 基础错误码定义 10000开头, 0 ：表示正常 ====================================
 const (
-	SuccessCode    = 0
-	ServiceErrCode = iota + 10000
-	ParamErrCode
-	RecordNotFoundErrCode
+	SuccessCode = 0
+
+	GlobalErrorCode = 1000
 )
 
-// 基础错误内容
-const (
-	SuccessMsg           = "Success"
-	ServerErrMsg         = "Service is buzy now, Please try again later"
-	ParamErrMsg          = "Wrong Parameter has been given"
-	RecordNotFoundErrMsg = "Record not found"
-)
-
-// 基础自定义错误
+// Global error
 var (
-	Success           = NewErrNo(SuccessCode, SuccessMsg)
-	ServiceErr        = NewErrNo(ServiceErrCode, ServerErrMsg)
-	ParamErr          = NewErrNo(ParamErrCode, ParamErrMsg)
-	RecordNotFoundErr = NewErrNo(RecordNotFoundErrCode, RecordNotFoundErrMsg)
+	Success = NewErrNo(SuccessCode, "success")
+
+	UnknownErr   = NewErrNo(GlobalErrorCode+1, "unknown error")
+	ParameterErr = NewErrNo(GlobalErrorCode+2, "parameter error")
 )
 
 type ErrNo struct {
-	ErrCode int32  `json:"err_code"`
-	ErrMsg  string `json:"err_msg"`
+	ErrCode  int32  `json:"err_code"`
+	ErrMsg   string `json:"err_msg"`
+	ErrCause error  `json:"-"`
 }
 
 func (e ErrNo) Error() string {
@@ -39,7 +30,7 @@ func (e ErrNo) Error() string {
 }
 
 func NewErrNo(code int32, msg string) ErrNo {
-	return ErrNo{code, msg}
+	return ErrNo{code, msg, nil}
 }
 
 func NewErrCode(code int32) ErrNo {
@@ -54,6 +45,19 @@ func (e ErrNo) WithMessage(msg string) ErrNo {
 	return e
 }
 
+func (e ErrNo) WithCause(cause error) ErrNo {
+	e.ErrCause = cause
+	return e
+}
+
+func (e ErrNo) Is(target error) bool {
+	targetErr, ok := target.(ErrNo)
+	if !ok {
+		return false
+	}
+	return e.ErrCode == targetErr.ErrCode
+}
+
 // ConvertErr convert error to Errno
 func ConvertErr(err error) ErrNo {
 	Err := ErrNo{}
@@ -61,7 +65,7 @@ func ConvertErr(err error) ErrNo {
 		return Err
 	}
 
-	s := ServiceErr
+	s := UnknownErr
 	s.ErrMsg = err.Error()
 	return s
 }

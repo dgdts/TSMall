@@ -30,3 +30,8 @@ func _apihelloMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _goodslistMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

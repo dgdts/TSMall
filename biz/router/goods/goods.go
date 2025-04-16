@@ -23,7 +23,7 @@ func Register(r *server.Hertz) {
 			_v1 := _api.Group("/v1", _v1Mw()...)
 			{
 				_goods := _v1.Group("/goods", _goodsMw()...)
-				_goods.POST("/list", append(_apihelloMw(), goods.ApiHello)...)
+				_goods.POST("/list", append(_goodslistMw(), goods.GoodsList)...)
 			}
 		}
 	}

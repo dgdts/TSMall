@@ -3,21 +3,22 @@ package goods
 import (
 	"context"
 
+	"TSMall/biz/bizcontext"
 	goods "TSMall/hertz_gen/goods"
+
 	"github.com/cloudwego/hertz/pkg/app"
-	"ssg/trade-admin/biz/bizcontext"
 )
 
-type ApiHelloService struct {
+type GoodsListService struct {
 	RequestContext *app.RequestContext
 	Context        context.Context
 }
 
-func NewApiHelloService(Context context.Context, RequestContext *app.RequestContext) *ApiHelloService {
-	return &ApiHelloService{RequestContext: RequestContext, Context: Context}
+func NewGoodsListService(Context context.Context, RequestContext *app.RequestContext) *GoodsListService {
+	return &GoodsListService{RequestContext: RequestContext, Context: Context}
 }
 
-func (h *ApiHelloService) Run(ctx *bizcontext.BizContext, req *goods.Empty) (resp *goods.Empty, err error) {
+func (h *GoodsListService) Run(ctx *bizcontext.BizContext, req *goods.Empty) (resp *goods.Empty, err error) {
 	//defer func() {
 	// hlog.CtxInfof(h.Context, "req = %+v", req)
 	// hlog.CtxInfof(h.Context, "resp = %+v", resp)

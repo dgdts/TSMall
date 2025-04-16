@@ -15,9 +15,9 @@ mkdir -p ${TARGET_DATA}
 
 # 根据当前系统自动切换编译方式
 if [[ `uname` == 'Linux' ]]; then   
-    GOOS=linux GOARCH=amd64 go build -o ${TARGET_BIN}/${RUN_NAME} ${BASE_DIR}/cmd/main.go
+    GOOS=linux GOARCH=amd64 go build -o ${TARGET_BIN}/${RUN_NAME} ${BASE_DIR}/cmd/api/main.go
 else
-    go build -o ${TARGET_BIN}/${RUN_NAME} ${BASE_DIR}/cmd/main.go    
+    go build -o ${TARGET_BIN}/${RUN_NAME} ${BASE_DIR}/cmd/api/main.go    
 fi
 
 cp -rf ${BASE_DIR}/configs/* ${TARGET_CONF}

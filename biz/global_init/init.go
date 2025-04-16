@@ -1,80 +1,114 @@
 package global_init
 
 import (
-	"TSMall/biz/r_conf"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
+	"TSMall/biz/config/biz_config"
+	"TSMall/biz/config/global_config"
 	"TSMall/biz/constant"
+	"TSMall/biz/hertz"
+	"TSMall/biz/log"
+	"TSMall/biz/middelware"
+
 	"github.com/cloudwego/hertz/pkg/app/middlewares/server/recovery"
 	"github.com/cloudwego/hertz/pkg/app/server/render"
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"github.com/hertz-contrib/cors"
 	"github.com/hertz-contrib/gzip"
 	"github.com/hertz-contrib/logger/accesslog"
 	"github.com/hertz-contrib/pprof"
 	jsoniter "github.com/json-iterator/go"
 
-	"ssg/kitex-common/common/biz_init"
-	"ssg/kitex-common/common/local_conf"
-	"ssg/kitex-common/suite/server_suite"
-
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-func InitServer(service local_conf.Service) (h *server.Hertz) {
-	// log初始化
-	biz_init.InitHLog(&lumberjack.Logger{
-		Filename:   local_conf.GetGConf().Log.LogFileName,
-		MaxSize:    local_conf.GetGConf().Log.LogMaxSize,
-		MaxBackups: local_conf.GetGConf().Log.LogMaxBackups,
-		MaxAge:     local_conf.GetGConf().Log.LogMaxAge,
-		Compress:   local_conf.GetGConf().Log.LogCompress,
-	}, local_conf.HLogLevel(), local_conf.GetGConf().Log.LogMode)
+func InitServer(service global_config.Service) (h *server.Hertz) {
+	// init hlog
+	log.InitHLog(&lumberjack.Logger{
+		Filename:   global_config.GConfig.Log.LogFileName,
+		MaxSize:    global_config.GConfig.Log.LogMaxSize,
+		MaxBackups: global_config.GConfig.Log.LogMaxBackups,
+		MaxAge:     global_config.GConfig.Log.LogMaxAge,
+		Compress:   global_config.GConfig.Log.LogCompress,
+	}, log.HLogLevel(global_config.GConfig.Log.LogLevel), global_config.GConfig.Log.LogMode)
 
-	// 初始化HertzServer, 这里与注册中心强绑定, 如果不需要注册中心, 可以将此行注释掉自行实现
-	h = server.New(server_suite.HertzCommonServerSuite{
-		Address: local_conf.GetGConf().Hertz.Service[0].Address,
-		CurrentServiceName: fmt.Sprintf("%s.%s.%s.%s",
-			constant.FRAME_NAME,
-			local_conf.GetGConf().Hertz.App,
-			local_conf.GetGConf().Hertz.Server,
-			local_conf.GetGConf().Hertz.Service[0].Name),
-		RegistryAddr: local_conf.GetGConf().Registry.RegistryAddress,
-		RegistryType: local_conf.GetGConf().Registry.Name,
-		NamespaceId:  local_conf.GetGConf().Config.Namespace,
-		Username:     local_conf.GetGConf().Registry.Username,
-		Password:     local_conf.GetGConf().Registry.Password,
-	}.Options()...)
+	if global_config.GConfig.Mode == global_config.ModeTypeNacos {
+		// register to nacos
+		h = server.New(hertz.HertzCommonServerSuite{
+			Address: global_config.GConfig.Hertz.Service.Address,
+			CurrentServiceName: fmt.Sprintf("%s.%s.%s.%s",
+				constant.FrameName,
+				global_config.GConfig.Hertz.App,
+				global_config.GConfig.Hertz.Server,
+				global_config.GConfig.Hertz.Service.Name),
+			RegistryAddr: global_config.GConfig.Registry.RegistryAddress,
+			RegistryType: global_config.GConfig.Registry.Name,
+			NamespaceId:  global_config.GConfig.Registry.Namespace,
+			Username:     global_config.GConfig.Registry.Username,
+			Password:     global_config.GConfig.Registry.Password,
+		}.Options()...)
+	} else {
+		h = server.Default(server.WithHostPorts(global_config.GConfig.Hertz.Service.Address))
+	}
 
-	// 注册通用中间件
+	// register middleware
 	registerMiddleware(h)
 
-	// 业务参数初始化，默认远程配置
-	r_conf.Biz_conf_init()
+	// init biz config
+	biz_config.BizConfigInit(global_config.GConfig.Config)
 
-	// mysql初始化,远程/本地
-	// mysql.RegisterConnByGroup("group", "data_id")
-	// mysql.RegisterConnByLocal("group", "data_id")
+	h.SetCustomSignalWaiter(func(err chan error) error {
+		signalToNotify := []os.Signal{syscall.SIGINT, syscall.SIGHUP, syscall.SIGTERM}
+		if signal.Ignored(syscall.SIGHUP) {
+			signalToNotify = []os.Signal{syscall.SIGINT, syscall.SIGTERM}
+		}
+		signals := make(chan os.Signal, 1)
+		signal.Notify(signals, signalToNotify...)
+		select {
+		case sig := <-signals:
+			switch sig {
+			// case syscall.SIGTERM:
+			//     // force exit
+			//     return errors.NewPublic(sig.String()) // nolint
+			case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM:
+				hlog.SystemLogger().Infof("Received signal: %s\n", sig)
+				// graceful shutdown
+				return nil
+			}
+		case err := <-err:
+			// error occurs, exit immediately
+			return err
+		}
+		return nil
+	})
 
-	// reids初始化,远程/本地
-	// redis.RegisterConnByGroup("group", "data_id")
-	// redis.RegisterConnByLocal("group", "data_id")
+	// init redis
+	// tsredis.InitRedis(nil)
+
+	// init mongodb
+	// tsmongodb.InitMongoDB(nil)
+
+	middelware.InitMiddeleware(h)
 
 	return h
 }
 
 func registerMiddleware(h *server.Hertz) {
 	// pprof
-	if local_conf.GetGConf().Hertz.EnablePprof {
+	if global_config.GConfig.Hertz.EnablePprof {
 		pprof.Register(h)
 	}
 	// gzip
-	if local_conf.GetGConf().Hertz.EnableGzip {
+	if global_config.GConfig.Hertz.EnableGzip {
 		h.Use(gzip.Gzip(gzip.DefaultCompression))
 	}
 
 	// access log
-	if local_conf.GetGConf().Hertz.EnableAccessLog {
+	if global_config.GConfig.Hertz.EnableAccessLog {
 		h.Use(accesslog.New())
 	}
 
@@ -84,6 +118,6 @@ func registerMiddleware(h *server.Hertz) {
 	// cores
 	h.Use(cors.Default())
 
-	// 自定义json序列化忽略omitempty
+	// customize json marshal ingore omitempty
 	render.ResetJSONMarshal(jsoniter.Marshal)
 }

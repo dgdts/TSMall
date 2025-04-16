@@ -1,8 +1,9 @@
 package xjsoniter
 
 import (
-	"github.com/cloudwego/hertz/pkg/common/hlog"
 	"unsafe"
+
+	"github.com/cloudwego/hertz/pkg/common/hlog"
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/modern-go/reflect2"
@@ -16,7 +17,8 @@ type ignoreOmitEmptyTagEncoder struct {
 	originDecoder jsoniter.ValEncoder
 }
 
-func (p *ignoreOmitEmptyTagEncoder) IsEmpty(ptr unsafe.Pointer) bool { //关键逻辑
+// key logic
+func (p *ignoreOmitEmptyTagEncoder) IsEmpty(ptr unsafe.Pointer) bool {
 	return false
 }
 
@@ -29,6 +31,6 @@ func (e *ignoreOmitEmptyTagExtension) DecorateEncoder(typ reflect2.Type, encoder
 }
 
 func init() {
-	hlog.Debugf("修复omitemptytag问题")
+	hlog.Debugf("fix omitemptytag issue")
 	jsoniter.RegisterExtension(&ignoreOmitEmptyTagExtension{})
 }

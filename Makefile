@@ -1,8 +1,5 @@
-generate:
-	hz update -idl idl/$(service).proto 
-
-ts_mall_service:
-	make service=ts_mall_service generate
+goods_service:
+	hz update -idl idl/goods.proto --customize_package=./template/package.yaml   
 
 all:
-	make ts_mall_service
+	make goods_service

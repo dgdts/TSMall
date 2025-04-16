@@ -35,6 +35,6 @@ _testmain.go
 *.local.yml
 /idl/kitex_gen
 /*/kitex_gen
-/cms_http_manager/output
-/cms_http_api/output
+/hertz_gen/*
 go.sum
+.run
