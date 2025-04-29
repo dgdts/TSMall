@@ -12,7 +12,6 @@ SERVICE_NAME=$2
 
 hz new --mod=${MODULE_NAME} \
     --service=${SERVICE_NAME} \
-    --idl=./idl/goods.proto \
     --customize_layout=./template/layout.yaml \
     --customize_package=./template/package.yaml \
     --handler_dir=biz/handler \

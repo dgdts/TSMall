@@ -108,7 +108,7 @@ layouts:
       mode: local
 
       hertz:
-        app: “YOUR-APP-NAME”
+        app: "{{.ServiceName}}"
         server: "enterbuild"
         enable_pprof: true
         enable_gzip: true
@@ -172,7 +172,7 @@ layouts:
       mode: nacos
 
       hertz:
-        app: “YOUR-APP-NAME”
+        app: "{{.ServiceName}}"
         server: "enterbuild"
         enable_pprof: false
         enable_gzip: true
@@ -235,7 +235,7 @@ layouts:
       mode: nacos
 
       hertz:
-        app: "“YOUR-APP-NAME”"
+        app: "{{.ServiceName}}"
         server: "enterbuild"
         enable_pprof: false
         enable_gzip: true
